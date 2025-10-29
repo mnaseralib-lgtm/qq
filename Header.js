@@ -1,23 +1,70 @@
+import React, { useEffect, useState } from "https://esm.sh/react@18.2.0";
+import { Download, QrCode, BarChart3 } from "./icons.js";
 
-import React from "https://esm.sh/react@18.2.0";
-import {ReportIcon, ScanIcon} from "./icons.js";
+const Header = ({ setView, currentView, scanCount }) => {
+  const [installPrompt, setInstallPrompt] = useState(null);
 
-const Header = ({setView, currentView, scanCount}) => {
-  return React.createElement('header', {className: 'bg-gray-800 text-white shadow-lg sticky top-0 z-10'},
-    React.createElement('div',{className:'container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center'},
-      React.createElement('div',{className:'flex items-center gap-2 sm:gap-4'},
-        React.createElement('h1',{className:'text-xl sm:text-2xl font-bold tracking-wide'}, 'نظام الحضور الذكي'),
-        currentView === 'SCANNER' ? React.createElement('div',{className:'bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full'},
-          React.createElement('span', null, 'العدد:'),
-          React.createElement('span',{className:'mr-1 font-mono'}, String(scanCount))
-        ) : null
-      ),
-      React.createElement('div', null,
-        React.createElement('button', {onClick: ()=> setView(currentView === 'SCANNER' ? 'REPORTS' : 'SCANNER'), className:'p-2 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white transition-colors duration-200'},
-          currentView === 'SCANNER' ? React.createElement(ReportIcon, {className:'w-6 h-6'}) : React.createElement(ScanIcon, {className:'w-6 h-6'})
-        )
-      )
-    )
+  // التعامل مع حدث "تثبيت التطبيق" PWA
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () =>
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const result = await installPrompt.userChoice;
+      if (result.outcome === "accepted") {
+        console.log("تم تثبيت التطبيق ✅");
+      }
+      setInstallPrompt(null);
+    } else {
+      alert("🔹 يمكنك تثبيت التطبيق من إعدادات المتصفح.");
+    }
+  };
+
+  return (
+    <header className="bg-emerald-600 text-white p-4 flex justify-between items-center shadow-md">
+      <h1 className="text-lg font-bold tracking-wide">نظام الحضور الذكي</h1>
+
+      <div className="flex items-center space-x-3 space-x-reverse">
+        {/* زر التبديل بين الماسح والتقارير */}
+        {currentView === "scanner" ? (
+          <button
+            className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-700 px-3 py-1 rounded-xl transition"
+            onClick={() => setView("reports")}
+          >
+            <BarChart3 size={18} />
+            <span className="text-sm">التقارير</span>
+          </button>
+        ) : (
+          <button
+            className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-700 px-3 py-1 rounded-xl transition"
+            onClick={() => setView("scanner")}
+          >
+            <QrCode size={18} />
+            <span className="text-sm">الماسح</span>
+          </button>
+        )}
+
+        {/* زر التثبيت 📲 */}
+        <button
+          className="bg-white text-emerald-600 rounded-full p-2 hover:bg-gray-200 transition"
+          onClick={handleInstallClick}
+          title="تثبيت التطبيق"
+        >
+          <Download size={18} />
+        </button>
+      </div>
+    </header>
   );
 };
 
